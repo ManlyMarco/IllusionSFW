@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -56,6 +58,9 @@ namespace SFWmod
         /// </summary>
         private static void OnChainloaderFinished()
         {
+            if (!Chainloader.PluginInfos.TryGetValue(KKAPI.KoikatuAPI.GUID, out var pluginInfo) || new Version(KKAPI.KoikatuAPI.VersionConst) > pluginInfo.Metadata.Version)
+                Logger.CreateLogSource(Name).Log(LogLevel.Warning | LogLevel.Message, $"KKAPI is outdated and needs to be updated, at least {KKAPI.KoikatuAPI.VersionConst} is required.");
+
             LateInitializer.Initialize();
         }
 
