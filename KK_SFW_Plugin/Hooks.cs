@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using BepInEx.Harmony;
 using ChaCustom;
 using Config;
 using HarmonyLib;
@@ -9,8 +11,23 @@ using UnityEngine.UI;
 
 namespace SFWmod
 {
-    internal static class LateHooks
+    internal static class Hooks
     {
+        public static void Apply()
+        {
+            var h = HarmonyWrapper.PatchAll(typeof(Hooks));
+
+            var targetMethod = typeof(ChaControl).GetMethods(AccessTools.all).Where(x => x.Name == "GetTexture").Where(x =>
+            {
+                var pars = x.GetParameters();
+                return pars.Any(p => p.ParameterType == typeof(ChaListDefine.CategoryNo)) &&
+                       pars.Any(p => p.ParameterType == typeof(int)) &&
+                       pars.Any(p => p.ParameterType == typeof(ChaListDefine.KeyType));
+            }).FirstOrDefault();
+            if (targetMethod == null) throw new ArgumentNullException(nameof(targetMethod), "failed to find GetTexture method");
+            h.Patch(targetMethod, new HarmonyMethod(typeof(Hooks), nameof(PreventNipAndPubes)));
+        }
+
         [HarmonyPrefix, HarmonyPatch(typeof(ChaControl), nameof(ChaControl.ChangeClothesBraAsync))]
         internal static void EnsureBra(ChaControl __instance, ref int id)
         {
@@ -77,7 +94,7 @@ namespace SFWmod
         {
             if (!value) return;
 
-            SfwPatcher.LogInfo("Removing NSFW studio items");
+            SfwPlugin.Logger.LogInfo("Removing NSFW studio items");
             // H category
             RemoveItemGroup(7);
             // FK/H category
@@ -90,19 +107,19 @@ namespace SFWmod
             void RemoveItemGroup(int group)
             {
                 if (!__instance.dicItemLoadInfo.Remove(group))
-                    SfwPatcher.LogInfo($"Could not find group {group} in dicItemLoadInfo");
+                    SfwPlugin.Logger.LogDebug($"Could not find group {group} in dicItemLoadInfo");
                 if (!__instance.dicItemGroupCategory.Remove(group))
-                    SfwPatcher.LogInfo($"Could not find group {group} in dicItemGroupCategory");
+                    SfwPlugin.Logger.LogDebug($"Could not find group {group} in dicItemGroupCategory");
             }
 
             void RemoveItemGroupAndCat(int group, int category)
             {
                 if (!__instance.dicItemLoadInfo.ContainsKey(group) ||
                     !__instance.dicItemLoadInfo[group].Remove(category))
-                    SfwPatcher.LogInfo($"Could not find group {group} cat {category} in dicItemLoadInfo");
+                    SfwPlugin.Logger.LogDebug($"Could not find group {group} cat {category} in dicItemLoadInfo");
                 if (!__instance.dicItemGroupCategory.ContainsKey(group) ||
                     !__instance.dicItemGroupCategory[group].dicCategory.Remove(category))
-                    SfwPatcher.LogInfo($"Could not find group {group} cat {category} in dicItemGroupCategory");
+                    SfwPlugin.Logger.LogDebug($"Could not find group {group} cat {category} in dicItemGroupCategory");
             }
         }
 
@@ -215,8 +232,6 @@ namespace SFWmod
         /// <summary>
         /// Do not load any nip or underhair textures, always keep empty
         /// </summary>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(ChaControl), "GetTexture", typeof(ChaListDefine.CategoryNo), typeof(int), typeof(ChaListDefine.KeyType), typeof(ChaListDefine.KeyType), typeof(string))]
         private static bool PreventNipAndPubes(ChaListDefine.CategoryNo type) //, ref Texture __result)
         {
             if (type == ChaListDefine.CategoryNo.mt_nip || type == ChaListDefine.CategoryNo.mt_underhair)

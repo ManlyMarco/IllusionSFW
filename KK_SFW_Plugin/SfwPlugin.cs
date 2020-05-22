@@ -1,26 +1,37 @@
 ﻿using System;
 using System.Linq;
+using BepInEx;
 using BepInEx.Harmony;
+using BepInEx.Logging;
 using ChaCustom;
+using HarmonyLib;
 using KKAPI.Chara;
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 using Manager;
+using Shared;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SFWmod
 {
-    internal static class LateInitializer
+    [BepInPlugin(GUID, GUID, Version)]
+    [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
+    [BepInDependency(KKABMX.Core.KKABMX_Core.GUID, "4.2")]
+    internal class SfwPlugin : BaseUnityPlugin
     {
-        private static MakerDropdown _skinTypeReplacementControl;
+        public const string GUID = Common.GUID;
+        public const string Version = Common.Version;
 
-        public static void Initialize()
+        internal static new ManualLogSource Logger;
+
+        private void Awake()
         {
-            SfwPatcher.LogInfo("Applying hooks");
+            Logger = base.Logger;
 
-            HarmonyWrapper.PatchAll(typeof(LateHooks));
+            Hooks.Apply();
 
             CharacterApi.CharacterReloaded += CharacterApi_CharacterReloaded;
             MakerAPI.MakerBaseLoaded += MakerAPI_MakerBaseLoaded;
@@ -31,6 +42,8 @@ namespace SFWmod
         {
             SfwBoneEffect.Apply(e.ReloadedCharacter);
         }
+
+        private static MakerDropdown _skinTypeReplacementControl;
 
         private static void MakerAPI_MakerBaseLoaded(object sender, RegisterCustomControlsEvent e)
         {
@@ -60,6 +73,7 @@ namespace SFWmod
         {
             SfwBoneEffect.Apply(MakerAPI.GetCharacterControl());
             DisableNsfwAccAttachPoints();
+            DisableNsfwSliders();
             DisableNsfwMakerCategories();
 
             // Replace the stock skin type selection window with a dropdown
@@ -109,12 +123,7 @@ namespace SFWmod
         /// </summary>
         private static void DisableNsfwMakerCategories()
         {
-            // Nip sliders
             var makerBase = MakerAPI.GetMakerBase();
-            var bt = makerBase.GetComponentInChildren<CvsBreast>(true).transform;
-            var childs = bt.Cast<Transform>().ToList();
-            var i = childs.FindIndex(t => t.name == "tglNipKind") - 5;
-            foreach (var t in childs.Skip(i)) t.gameObject.SetActive(false);
 
             // Whole body categories
             var topT = makerBase.GetComponentInChildren<CustomChangeBodyMenu>(true);
@@ -123,6 +132,45 @@ namespace SFWmod
             // H preferences category
             var hParams = makerBase.GetComponentInChildren<CustomChangeParameterMenu>(true);
             DisableCategoriesAndAdjustOffsets(hParams.transform, "tglH");
+        }
+
+        private static void DisableNsfwSliders()
+        {
+            var makerBase = MakerAPI.GetMakerBase();
+
+            // Nip sliders
+            {
+                var bt = makerBase.GetComponentInChildren<CvsBreast>(true).transform;
+                var childs = bt.Cast<Transform>().ToList();
+                var i = childs.FindIndex(t => t.name == "tglNipKind") - 5;
+                foreach (var t in childs.Skip(i)) t.gameObject.SetActive(false);
+
+                // inside all slider list
+                var all = makerBase.GetComponentInChildren<CvsBodyShapeAll>();
+                var tr = Traverse.Create(all);
+                tr.Field<MonoBehaviour>("sldAreolaBulge").Value?.transform.parent.gameObject.SetActive(false);
+                tr.Field<MonoBehaviour>("sldNipWeight").Value?.transform.parent.gameObject.SetActive(false);
+                tr.Field<MonoBehaviour>("sldNipStand").Value?.transform.parent.gameObject.SetActive(false);
+                tr.Field<MonoBehaviour>("sldAreolaSize").Value?.transform.parent.gameObject.SetActive(false);
+            }
+
+            // Hair copy color buttons, remove mention of pubic hair
+            {
+                var allHair = makerBase.GetComponentsInChildren<CvsHair>();
+                foreach (var cvsHair in allHair)
+                {
+                    var trHair = Traverse.Create(cvsHair);
+                    trHair.Field<MonoBehaviour>("btnUnderhairColor").Value?.transform.parent.gameObject.SetActive(false);
+                    var txtHair = trHair.Field<Button>("btnReflectColor").Value?.GetComponentInChildren<TextMeshProUGUI>();
+                    if (txtHair != null) txtHair.text = "Copy Hair Color To Eyebrows";
+                }
+
+                var eyebrow = makerBase.GetComponentInChildren<CvsEyebrow>();
+                var trEyebrow = Traverse.Create(eyebrow);
+                trEyebrow.Field<MonoBehaviour>("btnUnderhairColor").Value?.transform.parent.gameObject.SetActive(false);
+                var txtEyebrow = trEyebrow.Field<Button>("btnReflectColor").Value?.GetComponentInChildren<TextMeshProUGUI>();
+                if (txtEyebrow != null) txtEyebrow.text = "Copy Eyebrow Color To Hair";
+            }
         }
 
         private static void DisableCategoriesAndAdjustOffsets(Transform topT, params string[] categoryNames)
