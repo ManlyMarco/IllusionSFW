@@ -24,6 +24,7 @@ namespace SFWmod
             var disableNsfw = disableNsfwSetting.Value;
 
             SetUpPlugins(disableNsfw);
+            SetUpZipmods(disableNsfw);
         }
 
         private static void SetUpPlugins(bool disableNsfw)
@@ -40,7 +41,8 @@ namespace SFWmod
             if (disableNsfw)
             {
                 LogInfo("Enabling KK_SFW plugin");
-                File.WriteAllBytes(sfwPluginPath, ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
+                File.WriteAllBytes(sfwPluginPath,
+                    ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
 
                 var toDisable = allPlugins.Where(x => x.EndsWith(".dll")).ToList();
                 if (toDisable.Any())
@@ -73,37 +75,161 @@ namespace SFWmod
                     }
                 }
             }
+
+            bool PluginIsNsfw(string path)
+            {
+                var name = Path.GetFileNameWithoutExtension(path);
+
+                var x = new[]
+                {
+                    // Only need a featureless hill, not walleys and rivers
+                    "KK_UncensorSelector",
+                    // nip sliders, maybe safe to enable
+                    "KK_Pushup",
+                    // effects can be seen as nsfw in studio
+                    "KK_SkinEffects",
+                    // can start free h
+                    "TitleShortcuts.Koikatu",
+                    // Can be seen as nsfw
+                    "KK_Pregnancy",
+                    // Useless without game or freeh
+                    "KK_BecomeTrap",
+                    "KK_ExperienceLogic",
+                    "KoikatuGameplayMod",
+                    "KK_MoanSoftly",
+                    "KK_EyeShaking",
+                    "KK_Ahegao",
+                    "KK_FreeHRandom",
+                    "RealPOV.Koikatu",
+                    "KK_MobAdder",
+                };
+
+                return x.Any(z => z.Equals(name, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
-        private static bool PluginIsNsfw(string path)
+        private static void SetUpZipmods(bool disableNsfw)
         {
-            var name = Path.GetFileNameWithoutExtension(path);
+            var allPlugins = Directory.GetFiles(Path.Combine(Paths.GameRootPath, "mods"), "*.zi*", SearchOption.AllDirectories)
+                .Where(ZipmodIsNsfw)
+                .ToList();
 
-            var x = new[]
+            if (disableNsfw)
             {
-                // Only need a featureless hill, not walleys and rivers
-                "KK_UncensorSelector",
-                // nip sliders, maybe safe to enable
-                "KK_Pushup",
-                // effects can be seen as nsfw in studio
-                "KK_SkinEffects",
-                // can start free h
-                "TitleShortcuts.Koikatu",
-                // Can be seen as nsfw
-                "KK_Pregnancy",
-                // Useless without game or freeh
-                "KK_BecomeTrap",
-                "KK_ExperienceLogic",
-                "KoikatuGameplayMod",
-                "KK_MoanSoftly",
-                "KK_EyeShaking",
-                "KK_Ahegao",
-                "KK_FreeHRandom",
-                "RealPOV.Koikatu",
-                "KK_MobAdder",
-            };
+                var toDisable = allPlugins.Where(ZipmodIsEnabled).ToList();
+                if (toDisable.Any())
+                {
+                    LogInfo("Disabling NSFW zipmods...");
+                    foreach (var file in toDisable)
+                    {
+                        SetEnabled(file, false);
+                        LogInfo("Disabled " + Path.GetFileNameWithoutExtension(file));
+                    }
+                }
+            }
+            else
+            {
+                var toEnable = allPlugins.Where(x => !ZipmodIsEnabled(x)).ToList();
+                if (toEnable.Any())
+                {
+                    LogInfo("Restoring NSFW zipmods...");
 
-            return x.Any(z => z.Equals(name, StringComparison.OrdinalIgnoreCase));
+                    foreach (var file in toEnable)
+                    {
+                        SetEnabled(file, true);
+                        LogInfo("Enabled " + Path.GetFileNameWithoutExtension(file));
+                    }
+                }
+            }
+
+            bool ZipmodIsEnabled(string path)
+            {
+                return Path.GetExtension(path).StartsWith(".zip", StringComparison.OrdinalIgnoreCase);
+            }
+
+            void SetEnabled(string path, bool value)
+            {
+                //if (Enabled != value)
+                {
+                    File.Move(path, EnabledLocation(path, value));
+                }
+
+                string EnabledLocation(string location, bool enable = true)
+                {
+                    var ext = Path.GetExtension(path).ToCharArray();
+                    ext[3] = enable ? 'p' : '_';
+                    return path.Substring(0, path.Length - ext.Length) + new string(ext);
+                }
+            }
+
+
+            bool ZipmodIsNsfw(string path)
+            {
+                var modName = Path.GetFileNameWithoutExtension(path);
+
+                // Always nsfw
+                var explicitMods = new[]
+                {
+                    // Character items
+                    "[nakay]Nyotaimori Cream",
+                    "[cytryna1]Nipple Piercing",
+                    "[nam]Nipple Accessories",
+                    "[cytryna1]Pussy Piercing",
+                    "[uppervolta]Nipple Pasties Emblem",
+                    "[moderchan]Tortoise Shell Bondage",
+                    "[ztokki]Underwear Pasties",
+                    "[FutaBoy]Strapon",
+                    "[Roy12]Slutty Stuff Pack",
+                    "[VaizravaNa][BODYpaint]Three Links Chain",
+                    "[neverlucky]Dicks",
+                    "[DeathWeasel][KK]Condoms",
+                    "[nashi]Condom Skirt",
+                    "[ztokki]Additional Emblems",
+                    "[Augh]Buddist Big Butt Beads Bwoy",
+                    "[DeathWeasel]Body Writing",
+                    // Studio items
+                    "[mlekoduszek]Penis Mod",
+                    "[Item]Benis",
+                    "[HarvexARC]Studio H Items",
+                };
+                // Nsfw thumbnails or suggestive items
+                var suggestiveMods = new[]
+                {
+                    "[uppervolta]One Piece Revision",
+                    "[mat]Open Bras",
+                    "[onaka]Onaka Etc",
+                    "[Mint_E403]OBack",
+                    "[Mint_E403]Open Hole School Swinsuit",
+                    "[m14]Microsling.zip",
+                    "[Quokka]Accessory Mother Milk",
+                    "[nashi]Tiny Micro Bikini",
+                    "[Roy12]Sexy Schoolgirl Pack",
+                    "[nakay]Shorts and Pantyhose",
+                    "[Roy12]Slingshot Microbikini",
+                    "[nashi]Bras",
+                    "[DeathWeasel]Double Tan",
+                    "[yamadamod]sakuya",
+                    "[wtf]Waitress Maid Outfit",
+                    "[Sylvers]Yasogami Emblem",
+                    "[earthship]Heart Fishnet School Swimsuit",
+                    "[uppervolta]Heart Cut Swimsuits",
+                    "[wtf]Fake Sunburn",
+                    "[xne]saitoset",
+                    "[m14]Cross Swimsuit",
+                    "[Mint_E403]Open Hole School Swimsuit",
+                    "[lapinduracell]4K Transparent Lace Lingerie",
+                    "[yu000]Transparent School Swimsuit",
+                    "[yu000]Transparent Swimsuit",
+                    "[Poop]Poop",
+                    // Studio items
+                    "[Nexus]BDSM",
+                    "[SmokeOfC]Pillory",
+                    "[Joan6694]Extreme Cum Juice",
+                };
+
+                return explicitMods.Concat(suggestiveMods)
+                    .Any(z => modName.StartsWith(z, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         private static void LogInfo(string log)
