@@ -23,6 +23,33 @@ namespace SFWmod
 
             var disableNsfw = disableNsfwSetting.Value;
 
+            const string sfwPluginDll = "KK_SFW_Plugin.dll";
+            var sfwPluginPath = Path.Combine(Paths.PluginPath, sfwPluginDll);
+            try
+            {
+                if (disableNsfw)
+                {
+                    LogInfo("Enabling KK_SFW plugin");
+
+                    File.Delete(sfwPluginPath);
+                    File.WriteAllBytes(sfwPluginPath, ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
+                }
+                else
+                {
+                    LogInfo("Disabling KK_SFW plugin");
+
+                    File.Delete(sfwPluginPath);
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Happens when another copy of the game is using the plugin already, safe to ignore
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             SetUpPlugins(disableNsfw);
             SetUpZipmods(disableNsfw);
         }
@@ -34,16 +61,8 @@ namespace SFWmod
                 .Where(PluginIsNsfw)
                 .ToList();
 
-            const string sfwPluginDll = "KK_SFW_Plugin.dll";
-            var sfwPluginPath = Path.Combine(Paths.PluginPath, sfwPluginDll);
-            File.Delete(sfwPluginPath);
-
             if (disableNsfw)
             {
-                LogInfo("Enabling KK_SFW plugin");
-                File.WriteAllBytes(sfwPluginPath,
-                    ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
-
                 var toDisable = allPlugins.Where(x => x.EndsWith(".dll")).ToList();
                 if (toDisable.Any())
                 {
@@ -59,8 +78,6 @@ namespace SFWmod
             }
             else
             {
-                LogInfo("Disabling KK_SFW plugin");
-
                 var toEnable = allPlugins.Where(x => x.EndsWith(".dl_")).ToList();
                 if (toEnable.Any())
                 {
