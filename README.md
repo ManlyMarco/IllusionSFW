@@ -1,5 +1,5 @@
 # IllusionSFW
-Plugin turns off content that can be considered NSFW in some Illusion games (leaving SFW maker and studio). It disables free H, story mode, nudity (can't strip), some items in maker and studio, some plugins and some game functions. All content creation functions are still available (both character maker and studio), but NSFW items are disabled.
+Plugin turns off content that can be considered R18/NSFW (not safe for work) in some Illusion games (leaving SFW maker and studio). It disables free H, story mode, nudity (can't strip), some items in maker and studio, some plugins and some game functions. All content creation functions are still available (both character maker and studio), but NSFW items are disabled.
 
 One of the main uses for this plugin is streaming the game, and creating SFW artworks in studio if you don't want to see the lewd stuff.
 
