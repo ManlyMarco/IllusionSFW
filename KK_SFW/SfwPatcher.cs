@@ -166,19 +166,24 @@ namespace SFWmod
 
             void SetEnabled(string path, bool value)
             {
-                //if (Enabled != value)
+                path = Path.GetFullPath(path);
+                var newPath = EnabledLocation(path, value);
+                if (newPath != null)
                 {
-                    File.Move(path, EnabledLocation(path, value));
+                    File.Delete(newPath);
+                    File.Move(path, newPath);
                 }
 
                 string EnabledLocation(string location, bool enable = true)
                 {
                     var ext = Path.GetExtension(path).ToCharArray();
-                    ext[3] = enable ? 'p' : '_';
+                    var oldExt = ext[3];
+                    var newExt = enable ? 'p' : '_';
+                    if (char.ToLowerInvariant(oldExt) == char.ToLowerInvariant(newExt)) return null;
+                    ext[3] = newExt;
                     return path.Substring(0, path.Length - ext.Length) + new string(ext);
                 }
             }
-
 
             bool ZipmodIsNsfw(string path)
             {
