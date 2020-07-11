@@ -23,10 +23,11 @@ namespace SFWmod
 
             var disableNsfw = disableNsfwSetting.Value;
 
-            const string sfwPluginDll = "KK_SFW_Plugin.dll";
-            var sfwPluginPath = Path.Combine(Paths.PluginPath, sfwPluginDll);
             try
             {
+                const string sfwPluginDll = "KK_SFW_Plugin.dll";
+                var sfwPluginPath = Path.Combine(Paths.PluginPath, sfwPluginDll);
+
                 if (disableNsfw)
                 {
                     LogInfo("Enabling KK_SFW plugin");
@@ -50,8 +51,15 @@ namespace SFWmod
                 Console.WriteLine(e);
             }
 
-            SetUpPlugins(disableNsfw);
-            SetUpZipmods(disableNsfw);
+            try
+            {
+                SetUpPlugins(disableNsfw);
+                SetUpZipmods(disableNsfw);
+            }
+            catch (Exception e)
+            {
+                LogInfo("Failed to disable/enable plugins or mods - " + e);
+            }
         }
 
         private static void SetUpPlugins(bool disableNsfw)
@@ -127,7 +135,13 @@ namespace SFWmod
 
         private static void SetUpZipmods(bool disableNsfw)
         {
-            var allPlugins = Directory.GetFiles(Path.Combine(Paths.GameRootPath, "mods"), "*.zi*", SearchOption.AllDirectories)
+            var zipmodPath = Path.Combine(Paths.GameRootPath, "mods");
+            if (!Directory.Exists(zipmodPath))
+            {
+                LogInfo("The mods directory doesn't exist, skipping disabling zipmods");
+                return;
+            }
+            var allPlugins = Directory.GetFiles(zipmodPath, "*.zi*", SearchOption.AllDirectories)
                 .Where(ZipmodIsNsfw)
                 .ToList();
 
