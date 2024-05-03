@@ -30,6 +30,9 @@ namespace SFWmod
         {
             Logger = base.Logger;
 
+            var disableNsfwSetting = Common.MakeConfigSetting(Config);
+            if(!disableNsfwSetting.Value) return;
+
             Hooks.Apply();
 
             CharacterApi.CharacterReloaded += CharacterApi_CharacterReloaded;
