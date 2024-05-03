@@ -1,27 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace SFWmod
+namespace KKAPI.Utilities
 {
-    /// <summary>Utility methods for working with embedded resources.</summary>
-    internal static class ResourceUtils
+    /// <summary>
+    /// Utility methods for working with embedded resources.
+    /// Copied as-is from KKAPI since it can't be referenced at this point.
+    /// </summary>
+    public static class ResourceUtils
     {
         /// <summary>
         /// Read all bytes starting at current position and ending at the end of the stream.
         /// </summary>
         public static byte[] ReadAllBytes(this Stream input)
         {
-            byte[] buffer = new byte[16384];
-            using (MemoryStream memoryStream = new MemoryStream())
+            var buffer = new byte[16 * 1024];
+            using (var ms = new MemoryStream())
             {
-                int count;
-                while ((count = input.Read(buffer, 0, buffer.Length)) > 0)
-                    memoryStream.Write(buffer, 0, count);
-                return memoryStream.ToArray();
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                    ms.Write(buffer, 0, read);
+                return ms.ToArray();
             }
         }
 
@@ -32,38 +34,40 @@ namespace SFWmod
         /// For example if you have a file "ProjectRoot\Resources\icon.png" set as "Embedded Resource", you can use this to load it by
         /// doing <code>GetEmbeddedResource("icon.png"), assuming that no other embedded files have the same name.</code>
         /// </summary>
-        /// <exception cref="T:System.IO.IOException">Thrown if none or more than one resources were found matching the given resourceFileName</exception>
+        /// <exception cref="IOException">Thrown if none or more than one resources were found matching the given resourceFileName</exception>
         public static byte[] GetEmbeddedResource(string resourceFileName, Assembly containingAssembly = null)
         {
-            bool flag = false;
+            var autodetectedAssembly = false;
             if (containingAssembly == null)
             {
                 containingAssembly = Assembly.GetCallingAssembly();
-                flag = true;
+                autodetectedAssembly = true;
             }
-            List<string> list = ((IEnumerable<string>)containingAssembly.GetManifestResourceNames()).Where<string>((Func<string, bool>)(str => str.EndsWith(resourceFileName))).Take<string>(2).ToList<string>();
-            if (list.Count == 0 & flag)
+
+            var resourceNames = containingAssembly.GetManifestResourceNames().Where(str => str.EndsWith(resourceFileName)).Take(2).ToList();
+
+            if (resourceNames.Count == 0 && autodetectedAssembly)
             {
-                Assembly assembly = containingAssembly;
+                var origAssembly = containingAssembly;
+
+                // Try to use StackFrame in case calling method was Harmony patched because then Assembly.GetCallingAssembly can return wrong assembly
                 containingAssembly = new StackFrame(1).GetMethod().DeclaringType.Assembly;
-                if (assembly != containingAssembly)
+
+                if (origAssembly != containingAssembly)
                 {
-                    list = ((IEnumerable<string>)containingAssembly.GetManifestResourceNames()).Where<string>((Func<string, bool>)(str => str.EndsWith(resourceFileName))).Take<string>(2).ToList<string>();
-                    if (list.Count == 0)
-                        throw new IOException(string.Format("Could not find resource with name {0} inside assembly {1} or {2} - make sure the name and assembly are correct. Two assemblies were checked likely because your method has been harmony patched", (object)list, (object)containingAssembly, (object)assembly));
+                    resourceNames = containingAssembly.GetManifestResourceNames().Where(str => str.EndsWith(resourceFileName)).Take(2).ToList();
+                    if (resourceNames.Count == 0) throw new IOException($"Could not find resource with name {resourceFileName} inside assembly {containingAssembly} or {origAssembly} - make sure the name and assembly are correct. Two assemblies were checked likely because your method has been harmony patched");
                 }
             }
-            if (list.Count == 0)
-                throw new IOException(string.Format("Could not find resource with name {0} inside assembly {1} - make sure the name and assembly are correct", (object)list, (object)containingAssembly));
-            if (list.Count == 2)
-                throw new IOException(string.Format("Found more than one resource with name {0} inside assembly {1} - include more of the path in the name to make it not ambiguous", (object)list, (object)containingAssembly));
-            using (Stream manifestResourceStream = containingAssembly.GetManifestResourceStream(list[0]))
-            {
-                Stream input = manifestResourceStream;
-                if (input == null)
-                    throw new InvalidOperationException(string.Format("The resource {0} was not found inside assembly {1} or it failed to load", (object)resourceFileName, (object)containingAssembly));
-                return input.ReadAllBytes();
-            }
+
+            if (resourceNames.Count == 0)
+                throw new IOException($"Could not find resource with name {resourceNames} inside assembly {containingAssembly} - make sure the name and assembly are correct");
+
+            if (resourceNames.Count == 2)
+                throw new IOException($"Found more than one resource with name {resourceNames} inside assembly {containingAssembly} - include more of the path in the name to make it not ambiguous");
+
+            using (var stream = containingAssembly.GetManifestResourceStream(resourceNames[0]))
+                return ReadAllBytes(stream ?? throw new InvalidOperationException($"The resource {resourceFileName} was not found inside assembly {containingAssembly} or it failed to load"));
         }
     }
 }

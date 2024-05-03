@@ -15,7 +15,7 @@ namespace SFWmod
 
         public static void Patch(AssemblyDefinition assembly)
         {
-            var config = new ConfigFile(Utility.CombinePaths(Paths.ConfigPath, Common.GUID + ".cfg"), false);
+            var config = new ConfigFile(Path.Combine(Paths.ConfigPath, Common.GUID + ".cfg"), false);
             var disableNsfwSetting = config.Bind("General", "Disable NSFW content", false,
                 "Turn off content that can be considered NSFW. Changes take effect after game restart. Characters made in this mode work with no issues if NSFW is turned on and vice-versa." +
                 "\nDisables: free H, taking off underwear, genitalia, main game, NSFW items in maker and studio, some plugins." +
@@ -33,7 +33,7 @@ namespace SFWmod
                     LogInfo("Enabling KK_SFW plugin");
 
                     File.Delete(sfwPluginPath);
-                    File.WriteAllBytes(sfwPluginPath, ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
+                    File.WriteAllBytes(sfwPluginPath, KKAPI.Utilities.ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
                 }
                 else
                 {
