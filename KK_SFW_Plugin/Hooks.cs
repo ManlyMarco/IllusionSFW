@@ -16,7 +16,7 @@ namespace SFWmod
         {
             var h = Harmony.CreateAndPatchAll(typeof(Hooks), Shared.Common.GUID);
 
-            var targetMethod = typeof(ChaControl).GetMethods(AccessTools.all).Where(x => x.Name == "GetTexture").Where(x =>
+            var targetMethod = typeof(ChaControl).GetMethods(AccessTools.all).Where(x => x.Name == nameof(ChaControl.GetTexture)).Where(x =>
             {
                 var pars = x.GetParameters();
                 return pars.Any(p => p.ParameterType == typeof(ChaListDefine.CategoryNo)) &&
@@ -52,7 +52,7 @@ namespace SFWmod
         /// <summary>
         /// Hide mozaic so combined with disabled uncensor selector there are no features at all, only a flat area
         /// </summary>
-        [HarmonyPrefix, HarmonyPatch(typeof(ChaControl), "LateUpdateForce")]
+        [HarmonyPrefix, HarmonyPatch(typeof(ChaControl), nameof(ChaControl.LateUpdateForce))]
         internal static void DisableMoz(ChaControl __instance)
         {
             __instance.hideMoz = true;
@@ -139,7 +139,7 @@ namespace SFWmod
         /// Hide main menu options
         /// </summary>
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(TitleScene), "Start")]
+        [HarmonyPatch(typeof(TitleScene), nameof(TitleScene.Start))]
         private static void HideTitleButtons(TitleScene __instance, ref TitleScene.ButtonGroup[] ___buttons, Button ___btnRanking)
         {
             ___btnRanking.gameObject.SetActive(false);
@@ -170,7 +170,7 @@ namespace SFWmod
         /// Hide useless config options
         /// </summary>
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(ConfigScene), "Start")]
+        [HarmonyPatch(typeof(ConfigScene), nameof(ConfigScene.Start))]
         private static void HideConfigs(ConfigScene __instance, ref ConfigScene.ShortCutGroup[] ___shortCuts)
         {
             var results = ___shortCuts.ToList();
@@ -210,7 +210,7 @@ namespace SFWmod
         /// Change nude option text in maker
         /// </summary>
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(CvsDrawCtrl), "Start")]
+        [HarmonyPatch(typeof(CvsDrawCtrl), nameof(CvsDrawCtrl.Start))]
         private static void HideMakerNude(CvsDrawCtrl __instance, Toggle[] ___tglClothesState)
         {
             ___tglClothesState[3].gameObject.GetComponentInChildren<TextMeshProUGUI>().text = "No socks";

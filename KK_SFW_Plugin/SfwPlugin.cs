@@ -146,11 +146,10 @@ namespace SFWmod
 
                 // inside all slider list
                 var all = makerBase.GetComponentInChildren<CvsBodyShapeAll>();
-                var tr = Traverse.Create(all);
-                tr.Field<MonoBehaviour>("sldAreolaBulge").Value?.transform.parent.gameObject.SetActive(false);
-                tr.Field<MonoBehaviour>("sldNipWeight").Value?.transform.parent.gameObject.SetActive(false);
-                tr.Field<MonoBehaviour>("sldNipStand").Value?.transform.parent.gameObject.SetActive(false);
-                tr.Field<MonoBehaviour>("sldAreolaSize").Value?.transform.parent.gameObject.SetActive(false);
+                all.sldAreolaBulge?.transform.parent.gameObject.SetActive(false);
+                all.sldNipWeight?.transform.parent.gameObject.SetActive(false);
+                all.sldNipStand?.transform.parent.gameObject.SetActive(false);
+                all.sldAreolaSize?.transform.parent.gameObject.SetActive(false);
             }
 
             // Hair copy color buttons, remove mention of pubic hair
@@ -158,16 +157,14 @@ namespace SFWmod
                 var allHair = makerBase.GetComponentsInChildren<CvsHair>();
                 foreach (var cvsHair in allHair)
                 {
-                    var trHair = Traverse.Create(cvsHair);
-                    trHair.Field<MonoBehaviour>("btnUnderhairColor").Value?.transform.parent.gameObject.SetActive(false);
-                    var txtHair = trHair.Field<Button>("btnReflectColor").Value?.GetComponentInChildren<TextMeshProUGUI>();
+                    cvsHair.btnUnderhairColor?.transform.parent.gameObject.SetActive(false);
+                    var txtHair = cvsHair.btnReflectColor?.GetComponentInChildren<TextMeshProUGUI>();
                     if (txtHair != null) txtHair.text = "Copy Hair Color To Eyebrows";
                 }
 
                 var eyebrow = makerBase.GetComponentInChildren<CvsEyebrow>();
-                var trEyebrow = Traverse.Create(eyebrow);
-                trEyebrow.Field<MonoBehaviour>("btnUnderhairColor").Value?.transform.parent.gameObject.SetActive(false);
-                var txtEyebrow = trEyebrow.Field<Button>("btnReflectColor").Value?.GetComponentInChildren<TextMeshProUGUI>();
+                eyebrow.btnUnderhairColor?.transform.parent.gameObject.SetActive(false);
+                var txtEyebrow = eyebrow.btnReflectColor?.GetComponentInChildren<TextMeshProUGUI>();
                 if (txtEyebrow != null) txtEyebrow.text = "Copy Eyebrow Color To Hair";
             }
         }
