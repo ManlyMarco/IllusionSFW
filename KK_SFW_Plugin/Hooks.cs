@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using BepInEx.Harmony;
 using ChaCustom;
 using Config;
 using HarmonyLib;
@@ -15,7 +14,7 @@ namespace SFWmod
     {
         public static void Apply()
         {
-            var h = HarmonyWrapper.PatchAll(typeof(Hooks));
+            var h = Harmony.CreateAndPatchAll(typeof(Hooks), Shared.Common.GUID);
 
             var targetMethod = typeof(ChaControl).GetMethods(AccessTools.all).Where(x => x.Name == "GetTexture").Where(x =>
             {

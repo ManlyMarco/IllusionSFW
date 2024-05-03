@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using BepInEx;
-using BepInEx.Harmony;
 using BepInEx.Logging;
 using ChaCustom;
 using HarmonyLib;
@@ -19,7 +18,7 @@ namespace SFWmod
 {
     [BepInPlugin(GUID, GUID, Version)]
     [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
-    [BepInDependency(KKABMX.Core.KKABMX_Core.GUID, "4.2")]
+    [BepInDependency(KKABMX.Core.KKABMX_Core.GUID, KKABMX.Core.KKABMX_Core.Version)]
     internal class SfwPlugin : BaseUnityPlugin
     {
         public const string GUID = Common.GUID;
