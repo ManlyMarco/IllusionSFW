@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using Mono.Cecil;
 using Shared;
 
@@ -11,10 +12,14 @@ namespace SFWmod
 {
     public static class SfwPatcher
     {
+        private static ManualLogSource _logger;
+
         public static IEnumerable<string> TargetDLLs { get; } = new[] { "UnityEngine.dll" };
 
         public static void Patch(AssemblyDefinition assembly)
         {
+            _logger = Logger.CreateLogSource(Common.GUID);
+
             var config = new ConfigFile(Path.Combine(Paths.ConfigPath, Common.GUID + ".cfg"), false, new BepInPlugin(Common.GUID, Common.GUID, Common.Version));
             var disableNsfwSetting = Common.MakeConfigSetting(config);
 
@@ -27,14 +32,14 @@ namespace SFWmod
 
                 if (disableNsfw)
                 {
-                    LogInfo("Enabling KK_SFW plugin");
+                    _logger.LogInfo("Enabling KK_SFW plugin");
 
                     File.Delete(sfwPluginPath);
                     File.WriteAllBytes(sfwPluginPath, KKAPI.Utilities.ResourceUtils.GetEmbeddedResource(sfwPluginDll, typeof(SfwPatcher).Assembly));
                 }
                 else
                 {
-                    LogInfo("Disabling KK_SFW plugin");
+                    _logger.LogInfo("Disabling KK_SFW plugin");
 
                     File.Delete(sfwPluginPath);
                 }
@@ -55,7 +60,7 @@ namespace SFWmod
             }
             catch (Exception e)
             {
-                LogInfo("Failed to disable/enable plugins or mods - " + e);
+                _logger.LogError("Failed to disable/enable plugins or mods - " + e);
             }
         }
 
@@ -71,13 +76,13 @@ namespace SFWmod
                 var toDisable = allPlugins.Where(x => x.EndsWith(".dll")).ToList();
                 if (toDisable.Any())
                 {
-                    LogInfo("Disabling NSFW plugins...");
+                    _logger.LogInfo("Disabling NSFW plugins...");
                     foreach (var file in toDisable)
                     {
                         var newFilename = file.Substring(0, file.Length - 1) + '_';
                         File.Delete(newFilename);
                         File.Move(file, newFilename);
-                        LogInfo("Disabled " + Path.GetFileNameWithoutExtension(file));
+                        _logger.LogDebug("Disabled " + Path.GetFileNameWithoutExtension(file));
                     }
                 }
             }
@@ -86,14 +91,14 @@ namespace SFWmod
                 var toEnable = allPlugins.Where(x => x.EndsWith(".dl_")).ToList();
                 if (toEnable.Any())
                 {
-                    LogInfo("Restoring NSFW plugins...");
+                    _logger.LogInfo("Restoring NSFW plugins...");
 
                     foreach (var file in toEnable)
                     {
                         var newFilename = file.Substring(0, file.Length - 1) + 'l';
                         File.Delete(newFilename);
                         File.Move(file, newFilename);
-                        LogInfo("Enabled " + Path.GetFileNameWithoutExtension(file));
+                        _logger.LogDebug("Enabled " + Path.GetFileNameWithoutExtension(file));
                     }
                 }
             }
@@ -138,7 +143,7 @@ namespace SFWmod
             var zipmodPath = Path.Combine(Paths.GameRootPath, "mods");
             if (!Directory.Exists(zipmodPath))
             {
-                LogInfo("The mods directory doesn't exist, skipping disabling zipmods");
+                _logger.LogInfo("The mods directory doesn't exist, skipping disabling zipmods");
                 return;
             }
             var allPlugins = Directory.GetFiles(zipmodPath, "*.zi*", SearchOption.AllDirectories)
@@ -150,11 +155,11 @@ namespace SFWmod
                 var toDisable = allPlugins.Where(ZipmodIsEnabled).ToList();
                 if (toDisable.Any())
                 {
-                    LogInfo("Disabling NSFW zipmods...");
+                    _logger.LogInfo("Disabling NSFW zipmods...");
                     foreach (var file in toDisable)
                     {
                         SetEnabled(file, false);
-                        LogInfo("Disabled " + Path.GetFileNameWithoutExtension(file));
+                        _logger.LogDebug("Disabled " + Path.GetFileNameWithoutExtension(file));
                     }
                 }
             }
@@ -163,12 +168,12 @@ namespace SFWmod
                 var toEnable = allPlugins.Where(x => !ZipmodIsEnabled(x)).ToList();
                 if (toEnable.Any())
                 {
-                    LogInfo("Restoring NSFW zipmods...");
+                    _logger.LogInfo("Restoring NSFW zipmods...");
 
                     foreach (var file in toEnable)
                     {
                         SetEnabled(file, true);
-                        LogInfo("Enabled " + Path.GetFileNameWithoutExtension(file));
+                        _logger.LogDebug("Enabled " + Path.GetFileNameWithoutExtension(file));
                     }
                 }
             }
@@ -266,11 +271,6 @@ namespace SFWmod
                 return explicitMods.Concat(suggestiveMods)
                     .Any(z => modName.StartsWith(z, StringComparison.OrdinalIgnoreCase));
             }
-        }
-
-        private static void LogInfo(string log)
-        {
-            Console.WriteLine("[" + Common.GUID + "] " + log);
         }
     }
 }
