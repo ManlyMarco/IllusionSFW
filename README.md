@@ -8,7 +8,7 @@ One of the main uses for this plugin is streaming the game, and creating SFW art
 > These games are not suitable for minors even with this plugin installed.
 
 ## How to use
-0. You need to have at least BepInEx 5.0, KKAPI 1.11.1 and ABMX v4.2 installed for this plugin to work.
+0. You need to have at least BepInEx 5.4.22, KKAPI 1.38.0 and ABMX v4.4.6 (and their dependencies) installed for this plugin to work.
 1. Download the latest release.
 2. Extract the release to your game directory.
 3. If your custom game launcher is new enough, it should now display an "Enable safe mode" option. If it does, enable it and you're done!
