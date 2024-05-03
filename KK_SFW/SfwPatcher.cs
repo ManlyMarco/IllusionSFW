@@ -132,6 +132,7 @@ namespace SFWmod
                     // Shows warnings without uncensor selector
                     "KK_BetterPenetration",
                     "KK_Studio_BetterPenetration",
+                    "KK_AdditionalFKNodes"
                 };
 
                 return x.Any(z => z.Equals(name, StringComparison.OrdinalIgnoreCase));
