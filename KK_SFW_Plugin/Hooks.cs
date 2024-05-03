@@ -200,7 +200,7 @@ namespace SFWmod
                         break;
                 }
 
-            foreach (var add in __instance.GetComponentsInChildren<AdditionalFunctionsSetting>())
+            foreach (var add in __instance.GetComponentsInChildren<AdditionalFunctionsSetting>(true))
                 add.gameObject.SetActive(false);
 
             ___shortCuts = results.ToArray();
@@ -213,7 +213,7 @@ namespace SFWmod
         [HarmonyPatch(typeof(CvsDrawCtrl), nameof(CvsDrawCtrl.Start))]
         private static void HideMakerNude(CvsDrawCtrl __instance, Toggle[] ___tglClothesState)
         {
-            ___tglClothesState[3].gameObject.GetComponentInChildren<TextMeshProUGUI>().text = "No socks";
+            ___tglClothesState[3].gameObject.GetComponentInChildren<TextMeshProUGUI>(true).text = "No socks";
         }
 
         /// <summary>

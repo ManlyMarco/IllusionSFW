@@ -127,6 +127,9 @@ namespace SFWmod
                     "KK_FreeHRandom",
                     "RealPOV.Koikatu",
                     "KK_MobAdder",
+                    // Shows warnings without uncensor selector
+                    "KK_BetterPenetration",
+                    "KK_Studio_BetterPenetration",
                 };
 
                 return x.Any(z => z.Equals(name, StringComparison.OrdinalIgnoreCase));

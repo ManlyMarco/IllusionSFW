@@ -110,7 +110,7 @@ namespace SFWmod
             }
 
             // Select dropdown
-            foreach (var dropdown in makerBase.GetComponentsInChildren<CvsAccessory>(true).Select(x => x.GetComponentInChildren<TMP_Dropdown>()))
+            foreach (var dropdown in makerBase.GetComponentsInChildren<CvsAccessory>(true).Select(x => x.GetComponentInChildren<TMP_Dropdown>(true)))
             {
                 // Crotch area attach point. has mostly nsfw items
                 dropdown.options.RemoveAll(data => data.text == "股間周り");
@@ -145,27 +145,37 @@ namespace SFWmod
                 foreach (var t in childs.Skip(i)) t.gameObject.SetActive(false);
 
                 // inside all slider list
-                var all = makerBase.GetComponentInChildren<CvsBodyShapeAll>();
-                all.sldAreolaBulge?.transform.parent.gameObject.SetActive(false);
-                all.sldNipWeight?.transform.parent.gameObject.SetActive(false);
-                all.sldNipStand?.transform.parent.gameObject.SetActive(false);
-                all.sldAreolaSize?.transform.parent.gameObject.SetActive(false);
+                var all = makerBase.GetComponentInChildren<CvsBodyShapeAll>(true);
+                if (all.sldAreolaBulge != null) all.sldAreolaBulge.transform.parent.gameObject.SetActive(false);
+                if (all.sldNipWeight != null) all.sldNipWeight.transform.parent.gameObject.SetActive(false);
+                if (all.sldNipStand != null) all.sldNipStand.transform.parent.gameObject.SetActive(false);
+                if (all.sldAreolaSize != null) all.sldAreolaSize.transform.parent.gameObject.SetActive(false);
             }
 
             // Hair copy color buttons, remove mention of pubic hair
             {
-                var allHair = makerBase.GetComponentsInChildren<CvsHair>();
+                var allHair = makerBase.GetComponentsInChildren<CvsHair>(true);
                 foreach (var cvsHair in allHair)
                 {
-                    cvsHair.btnUnderhairColor?.transform.parent.gameObject.SetActive(false);
-                    var txtHair = cvsHair.btnReflectColor?.GetComponentInChildren<TextMeshProUGUI>();
-                    if (txtHair != null) txtHair.text = "Copy Hair Color To Eyebrows";
+                    if (cvsHair.btnUnderhairColor != null)
+                        cvsHair.btnUnderhairColor.transform.parent.gameObject.SetActive(false);
+
+                    if (cvsHair.btnReflectColor != null)
+                    {
+                        var txtHair = cvsHair.btnReflectColor.GetComponentInChildren<TextMeshProUGUI>(true);
+                        if (txtHair != null) txtHair.text = "Copy Hair Color To Eyebrows";
+                    }
                 }
 
-                var eyebrow = makerBase.GetComponentInChildren<CvsEyebrow>();
-                eyebrow.btnUnderhairColor?.transform.parent.gameObject.SetActive(false);
-                var txtEyebrow = eyebrow.btnReflectColor?.GetComponentInChildren<TextMeshProUGUI>();
-                if (txtEyebrow != null) txtEyebrow.text = "Copy Eyebrow Color To Hair";
+                var eyebrow = makerBase.GetComponentInChildren<CvsEyebrow>(true);
+                if (eyebrow.btnUnderhairColor != null)
+                    eyebrow.btnUnderhairColor.transform.parent.gameObject.SetActive(false);
+
+                if (eyebrow.btnReflectColor != null)
+                {
+                    var txtEyebrow = eyebrow.btnReflectColor.GetComponentInChildren<TextMeshProUGUI>(true);
+                    if (txtEyebrow != null) txtEyebrow.text = "Copy Eyebrow Color To Hair";
+                }
             }
         }
 
